@@ -32,6 +32,8 @@ describeWithMoonbeam("Moonbeam RPC (Contract Methods)", `simple-specs.json`, (co
 
     const tx_hash = latestBlock.transactions[0];
     const tx = await context.web3.eth.getTransaction(tx_hash);
+    // @ts-ignore
+    expect(tx.creates).to.equal(FIRST_CONTRACT_ADDRESS);
     expect(tx.hash).to.equal(tx_hash);
   });
 

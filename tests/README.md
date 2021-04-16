@@ -32,7 +32,7 @@ npm run test-with-logs
 You can also add the node's logs to the output using the `MOONBEAM_LOG` env variable. Ex:
 
 ```
-MOONBEAM_LOG="warn,rpc=trace" npm run test
+MOONBEAM_LOG="info,evm=trace,rpc=trace,ethereum=trace" npm run test
 ```
 
 The Moonbeam node will be listening for RPC on port 19933, mostly to avoid

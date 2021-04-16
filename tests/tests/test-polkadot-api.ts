@@ -33,6 +33,9 @@ describeWithMoonbeam("Moonbeam Polkadot API", `simple-specs.json`, (context) => 
     }
     // TODO: do some testing with the hash
     await createAndFinalizeBlock(context.polkadotApi);
+    let res = await context.polkadotApi.query.balances.account(TEST_ACCOUNT_2);
+    console.log("res", res);
+    expect(res).to.eq("123");
     expect(await context.web3.eth.getBalance(TEST_ACCOUNT_2)).to.equal("123");
   });
 
