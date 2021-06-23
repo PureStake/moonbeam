@@ -128,13 +128,13 @@ cargo test
 ```bash
 # Install dependencies for integration tests
 cd moonbeam-types-bundle
-npm i
+yarn
 
 cd ../tests
-npm i
+yarn
 
 # Run integration tests
-npm test
+yarn run test
 ```
 
 ## Chain IDs

@@ -8,6 +8,8 @@
 # Typescript directories
 **/node_modules
 **/.yarn
+**/.pnp.*
+
 
 # Spec/Wasm build directory
 /build/

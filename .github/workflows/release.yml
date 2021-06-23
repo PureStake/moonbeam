@@ -187,9 +187,10 @@ jobs:
         run: |
           chmod uog+x build/moonbeam
           cd moonbeam-types-bundle
-          npm install
+          yarn
+          yarn --version
           cd ../tests
-          npm install
+          yarn
           node_modules/.bin/mocha --parallel -j 7 -r ts-node/register 'tests/**/test-*.ts'
 
   ####### Prepare and Deploy Docker images #######
@@ -465,7 +466,7 @@ jobs:
         id: generate-release-body
         run: |
           cd tools
-          npm install
+          yarn
           node_modules/.bin/ts-node github/generate-release-body.ts > ../body.md
       - name: Get runtime version
         id: get-runtime-ver
