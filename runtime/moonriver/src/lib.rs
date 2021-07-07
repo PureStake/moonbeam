@@ -34,7 +34,7 @@ use frame_support::{
 	traits::{Filter, Get, Imbalance, InstanceFilter, OnUnbalanced},
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+		GetDispatchInfo, IdentityFee, Weight,
 	},
 	PalletId,
 };
@@ -48,7 +48,7 @@ use pallet_balances::NegativeImbalance;
 use pallet_ethereum::Call::transact;
 use pallet_ethereum::Transaction as EthereumTransaction;
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, FeeCalculator,
+	Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, FeeCalculator, GasWeightMapping,
 	IdentityAddressMapping, Runner,
 };
 use pallet_transaction_payment::CurrencyAdapter;
@@ -60,7 +60,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	AccountId32, ApplyExtrinsicResult, Perbill, Percent, Permill,
+	AccountId32, ApplyExtrinsicResult, Perbill, Percent, Permill, SaturatedConversion,
 };
 use sp_std::{convert::TryFrom, prelude::*};
 #[cfg(feature = "std")]
@@ -844,13 +844,68 @@ runtime_common::impl_runtime_apis_plus_common! {
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
 		fn validate_transaction(
 			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
+			xt: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
 			// Filtered calls should not enter the tx pool as they'll fail if inserted.
-			let allowed = <Runtime as frame_system::Config>::BaseCallFilter::filter(&tx.function);
+			let allowed = <Runtime as frame_system::Config>::BaseCallFilter::filter(&xt.function);
 
 			if allowed {
-				Executive::validate_transaction(source, tx)
+
+				// This runtime uses Substrate's pallet transaction payment. This
+				// makes the chain feel like a standard Substrate chain when submitting
+				// frame transactions and using Substrate ecosystem tools. It has the downside that
+				// transaction are not prioritized by gas_price. The following code reprioritizes
+				// transactions to overcome this.
+				//
+				// A more elegant, ethereum-first solution is
+				// a pallet that replaces pallet transaction payment, and allows users
+				// to directly specify a gas price rather than computing an effective one.
+				// #HopefullySomeday
+
+				// First we pass the transactions to the standard FRAME executive. This calculates all the
+				// necessary tags, longevity and other properties that we will leave unchanged.
+				// This also assigns some priority that we don't care about and will overwrite next.
+				let mut intermediate_valid = Executive::validate_transaction(source, xt.clone())?;
+
+				// If this is a pallet ethereum transaction, then its priority is already set
+				// according to gas price from pallet ethereum. If it is any other kind of transaction,
+				// we modify its priority.
+				Ok(match &xt.function {
+					Call::Ethereum(transact(_)) => intermediate_valid,
+					_ => {
+						let dispatch_info = xt.get_dispatch_info();
+
+						let tip = match xt.signature {
+							None => 0,
+							Some((_, _, signed_extra)) => {
+								// Yuck, this depends on the index of charge transaction in Signed Extra
+								let charge_transaction = signed_extra.6;
+								charge_transaction.tip()
+							}
+						};
+
+						// Calculate the fee that will be taken by pallet transaction payment
+						let fee: u64 = TransactionPayment::compute_fee(
+							xt.encode().len() as u32,
+							&dispatch_info,
+							tip,
+						).saturated_into();
+
+						// Calculate how much gas this effectively uses according to the existing mapping
+						let effective_gas =
+							<Runtime as pallet_evm::Config>::GasWeightMapping::weight_to_gas(
+								dispatch_info.weight
+							);
+
+						// Here we calculate an ethereum-style effective gas price using the
+						// current fee of the transaction
+						let effective_gas_price = fee / effective_gas;
+
+						// Overwrite the original prioritization with this ethereum one
+						intermediate_valid.priority = effective_gas_price;
+						intermediate_valid
+					}
+				})
 			} else {
 				InvalidTransaction::Call.into()
 			}
