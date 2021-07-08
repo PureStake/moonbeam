@@ -31,7 +31,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use fp_rpc::TransactionStatus;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Get, Imbalance, InstanceFilter, OnUnbalanced},
+	traits::{Imbalance, InstanceFilter, OnUnbalanced},
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
@@ -270,8 +270,6 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 }
 
-impl pallet_ethereum_chain_id::Config for Runtime {}
-
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
 /// Current approximation of the gas/s consumption considering
@@ -298,6 +296,7 @@ impl pallet_evm::GasWeightMapping for MoonbeamGasWeightMapping {
 parameter_types! {
 	pub BlockGasLimit: U256
 		= U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
+	pub const EthereumChainId: u64 = 1287;
 }
 
 pub struct FixedGasPrice;
@@ -738,31 +737,31 @@ construct_runtime! {
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Utility: pallet_utility::{Pallet, Call, Event},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		ParachainInfo: parachain_info::{Pallet, Storage, Config},
-		EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config},
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Scheduler: pallet_scheduler::{Pallet, Storage, Config, Event<T>, Call},
-		Democracy: pallet_democracy::{Pallet, Storage, Config<T>, Event<T>, Call},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
+		Utility: pallet_utility::{Pallet, Call, Event} = 1,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 3,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 4,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage} = 5,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 6,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 7,
+		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 8,
+		// Pallet Ethereum Chain ID was previously 9
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 10,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 11,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 12,
+		Scheduler: pallet_scheduler::{Pallet, Storage, Config, Event<T>, Call} = 13,
+		Democracy: pallet_democracy::{Pallet, Storage, Config<T>, Event<T>, Call} = 14,
 		CouncilCollective:
-			pallet_collective::<Instance1>::{Pallet, Call, Storage, Event<T>, Origin<T>, Config<T>},
+			pallet_collective::<Instance1>::{Pallet, Call, Storage, Event<T>, Origin<T>, Config<T>} = 15,
 		TechComitteeCollective:
-			pallet_collective::<Instance2>::{Pallet, Call, Storage, Event<T>, Origin<T>, Config<T>},
-		Treasury: pallet_treasury::{Pallet, Storage, Config, Event<T>, Call},
-		AuthorInherent: pallet_author_inherent::{Pallet, Call, Storage, Inherent},
-		AuthorFilter: pallet_author_slot_filter::{Pallet, Call, Storage, Event, Config},
-		CrowdloanRewards: pallet_crowdloan_rewards::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorMapping: pallet_author_mapping::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
+			pallet_collective::<Instance2>::{Pallet, Call, Storage, Event<T>, Origin<T>, Config<T>} = 16,
+		Treasury: pallet_treasury::{Pallet, Storage, Config, Event<T>, Call} = 17,
+		AuthorInherent: pallet_author_inherent::{Pallet, Call, Storage, Inherent} = 18,
+		AuthorFilter: pallet_author_slot_filter::{Pallet, Call, Storage, Event, Config} = 19,
+		CrowdloanRewards: pallet_crowdloan_rewards::{Pallet, Call, Config<T>, Storage, Event<T>} = 20,
+		AuthorMapping: pallet_author_mapping::{Pallet, Call, Config<T>, Storage, Event<T>} = 21,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>}= 22,
 	}
 }
 

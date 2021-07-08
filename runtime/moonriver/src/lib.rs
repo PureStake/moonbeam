@@ -287,8 +287,6 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 }
 
-impl pallet_ethereum_chain_id::Config for Runtime {}
-
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
 /// Current approximation of the gas/s consumption considering
@@ -315,6 +313,7 @@ impl pallet_evm::GasWeightMapping for MoonbeamGasWeightMapping {
 parameter_types! {
 	pub BlockGasLimit: U256
 		= U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
+		pub const EthereumChainId: u64 = 1285;
 }
 
 pub struct FixedGasPrice;
@@ -779,7 +778,6 @@ construct_runtime! {
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
 
 		// Ethereum compatibility
-		EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
 

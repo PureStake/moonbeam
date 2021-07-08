@@ -61,7 +61,6 @@ fn verify_pallet_prefixes() {
 	is_pallet_prefix::<moonriver_runtime::ParachainSystem>("ParachainSystem");
 	is_pallet_prefix::<moonriver_runtime::TransactionPayment>("TransactionPayment");
 	is_pallet_prefix::<moonriver_runtime::ParachainInfo>("ParachainInfo");
-	is_pallet_prefix::<moonriver_runtime::EthereumChainId>("EthereumChainId");
 	is_pallet_prefix::<moonriver_runtime::EVM>("EVM");
 	is_pallet_prefix::<moonriver_runtime::Ethereum>("Ethereum");
 	is_pallet_prefix::<moonriver_runtime::ParachainStaking>("ParachainStaking");
@@ -178,7 +177,6 @@ fn verify_pallet_indices() {
 	// Sudo
 	is_pallet_index::<moonriver_runtime::Sudo>(40);
 	// Ethereum compatibility
-	is_pallet_index::<moonriver_runtime::EthereumChainId>(50);
 	is_pallet_index::<moonriver_runtime::EVM>(51);
 	is_pallet_index::<moonriver_runtime::Ethereum>(52);
 	// Governance

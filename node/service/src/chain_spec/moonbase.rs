@@ -72,7 +72,6 @@ pub fn development_chain_spec(mnemonic: Option<String>, num_accounts: Option<u32
 				accounts.clone(),
 				3_000_000 * UNIT,
 				Default::default(), // para_id
-				1281,               //ChainId
 			)
 		},
 		vec![],
@@ -134,7 +133,6 @@ pub fn get_chain_spec(para_id: ParaId) -> ChainSpec {
 				],
 				3_000_000 * UNIT,
 				para_id,
-				1280, //ChainId
 			)
 		},
 		vec![],
@@ -182,7 +180,6 @@ pub fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	crowdloan_fund_pot: Balance,
 	para_id: ParaId,
-	chain_id: u64,
 ) -> GenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
@@ -211,7 +208,6 @@ pub fn testnet_genesis(
 		parachain_info: ParachainInfoConfig {
 			parachain_id: para_id,
 		},
-		ethereum_chain_id: EthereumChainIdConfig { chain_id },
 		evm: EVMConfig {
 			// We need _some_ code inserted at the precompile address so that
 			// the evm will actually call the address.

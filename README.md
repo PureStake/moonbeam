@@ -142,7 +142,7 @@ npm test
 The Ethereum specification described a numeric Chain Id. The Moonbeam mainnet Chain Id will be 1284
 because it takes 1284 milliseconds for a moonbeam to reach Earth.
 
-Moonbeam nodes support multiple public chains and testnets, with the following Chain Ids.
+The moonbeam software supports multiple runtimes, each.... but what if we launch multiple networks with the same runtime. Like moonrive rand moonsama.
 
 | Network Description                | Chain ID    |
 | ---------------------------------- | ----------- |
@@ -151,6 +151,7 @@ Moonbeam nodes support multiple public chains and testnets, with the following C
 | Reserved for other TestNets        | 1282 - 1283 |
 | Moonbeam (Polkadot)                | 1284        |
 | Moonriver (Kusama)                 | 1285        |
+| Moonshadow (Westend)               | TODO        |
 | Moonrock (Rococo)                  | 1286        |
 | Moonbase Alpha TestNet             | 1287        |
 | Reserved for other public networks | 1288 - 1289 |
