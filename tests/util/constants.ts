@@ -3,6 +3,7 @@ export const SPECS_PATH = `./moonbeam-test-specs`;
 export const DEBUG_MODE = process.env.DEBUG_MODE || false;
 export const DISPLAY_LOG = process.env.MOONBEAM_LOG || false;
 export const MOONBEAM_LOG = process.env.MOONBEAM_LOG || "info";
+export const ANALYZER = process.env.ANALYZER || false;
 
 export const BINARY_PATH = process.env.BINARY_PATH || `../target/release/moonbeam`;
 export const SPAWNING_TIME = 10000;

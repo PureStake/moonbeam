@@ -41,7 +41,7 @@ use sp_utils::mpsc::TracingUnboundedSender;
 use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
 
 pub type Responder = oneshot::Sender<RpcResult<single::TransactionTrace>>;
-pub type DebugRequester = TracingUnboundedSender<((H256, Option<TraceParams>), Responder)>;
+pub type DebugRequester = TracingUnboundedSender<((H256, Option<TraceParams>, u32), Responder)>;
 
 pub struct Debug {
 	pub requester: DebugRequester,
@@ -62,12 +62,17 @@ impl DebugT for Debug {
 		params: Option<TraceParams>,
 	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>> {
 		let mut requester = self.requester.clone();
-
+		let rnd: u32 = rand::random();
 		async move {
+			log::debug!(
+				target: "debug-test",
+				"-------> START {}",
+				rnd,
+			);
 			let (tx, rx) = oneshot::channel();
 			// Send a message from the rpc handler to the service level task.
 			requester
-				.send(((transaction_hash, params), tx))
+				.send(((transaction_hash, params, rnd), tx))
 				.await
 				.map_err(|err| {
 					internal_err(format!(
@@ -77,9 +82,13 @@ impl DebugT for Debug {
 				})?;
 
 			// Receive a message from the service level task and send the rpc response.
-			rx.await.map_err(|err| {
-				internal_err(format!("debug service dropped the channel : {:?}", err))
-			})?
+			let r = rx.await;
+			log::debug!(
+				target: "debug-test",
+				"-------> END {}",
+				rnd,
+			);
+			r.map_err(|err| internal_err(format!("debug service dropped the channel : {:?}", err)))?
 		}
 		.boxed()
 		.compat()
@@ -112,7 +121,7 @@ where
 
 		let fut = async move {
 			loop {
-				if let Some(((transaction_hash, params), response_tx)) = rx.next().await {
+				if let Some(((transaction_hash, params, rnd), response_tx)) = rx.next().await {
 					let client = client.clone();
 					let backend = backend.clone();
 					let frontier_backend = frontier_backend.clone();
@@ -137,6 +146,7 @@ where
 										frontier_backend.clone(),
 										transaction_hash,
 										params,
+										rnd,
 									)
 								})
 								.await
@@ -168,6 +178,7 @@ where
 		frontier_backend: Arc<fc_db::Backend<B>>,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
+		rnd: u32,
 	) -> RpcResult<single::TransactionTrace> {
 		let (hash, index) = match frontier_backend_client::load_transactions::<B, C>(
 			client.as_ref(),
@@ -196,7 +207,6 @@ where
 
 		// Get the extrinsics.
 		let ext = blockchain.body(reference_id).unwrap().unwrap();
-
 		// Get the block that contains the requested transaction.
 		let reference_block = match api.current_block(&reference_id) {
 			Ok(block) => block,
@@ -236,9 +246,24 @@ where
 		if let Some(block) = reference_block {
 			let transactions = block.transactions;
 			if let Some(transaction) = transactions.get(index) {
-				return client
-					.runtime_api()
-					.trace_transaction(&parent_block_id, ext, &transaction, trace_type)
+				log::debug!(
+					target: "debug-test",
+					"-------> START RUNTIME {}",
+					rnd,
+				);
+				let runtime_call = client.runtime_api().trace_transaction(
+					&parent_block_id,
+					ext,
+					&transaction,
+					trace_type,
+				);
+
+				log::debug!(
+					target: "debug-test",
+					"-------> END RUNTIME {}",
+					rnd,
+				);
+				return runtime_call
 					.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?
 					.map_err(|e| internal_err(format!("DispatchError: {:?}", e)));
 			}

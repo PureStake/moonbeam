@@ -47,6 +47,23 @@ MOONBEAM_LOG="warn,rpc=trace" npm run test
 The test script will find available ports above 20000 in order to ensure that it doesn't conflict
 with any other running services.
 
+## Analyzer mode
+
+The node supports being run with `perf` or with `valgrind`.  
+However it requires to run only 1 test at a time
+
+```
+ANALYZER=valgrind npm run test -- --grep 'should allow optimized concurrent execution'
+```
+
+This will generate a file `callgrind.out.xxxxx`
+
+```
+ANALYZER=perf npm run test -- --grep 'should allow optimized concurrent execution'
+```
+
+This will generate a file `perf.data`
+
 # Debugging a Moonbeam node
 
 The repository contains a pre-configured debugger configuration for VSCode with the **CodeLLDB**

@@ -7,6 +7,8 @@ import { GENESIS_ACCOUNT_PRIVATE_KEY } from "./constants";
 import { Subscription as Web3Subscription } from "web3-core-subscriptions";
 import { BlockHeader } from "web3-eth";
 import { Log } from "web3-core";
+import * as http from "http";
+const debug = require("debug")("test:providers");
 
 export async function customWeb3Request(web3: Web3, method: string, params: any[]) {
   return new Promise<JsonRpcResponse>((resolve, reject) => {
@@ -28,6 +30,92 @@ export async function customWeb3Request(web3: Web3, method: string, params: any[
         resolve(result);
       }
     );
+  });
+}
+
+const agent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 10,
+  maxFreeSockets: 10,
+  maxTotalSockets: 10,
+});
+
+const getDuration = (start: bigint, end: bigint) => {
+  return Number((end - start) / 1000000n);
+};
+
+export async function customRawRequest(host: string, port: number, method: string, params: any[]) {
+  return new Promise<string>((resolve, reject) => {
+    const timings = {
+      startAt: process.hrtime.bigint(),
+      dnsLookupAt: undefined,
+      tcpConnectionAt: undefined,
+      tlsHandshakeAt: undefined,
+      firstByteAt: undefined,
+      endAt: undefined,
+    };
+    const responseBody = [];
+    const req = http.request(
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        agent,
+        host,
+        port,
+      },
+      function (res) {
+        res.once("readable", () => {
+          timings.firstByteAt = process.hrtime.bigint();
+        });
+        res.on("data", (chunk) => {
+          responseBody.push(chunk);
+        });
+        res.on("end", () => {
+          timings.endAt = process.hrtime.bigint();
+          debug(`Request done`, {
+            tcpConn: getDuration(
+              timings.dnsLookupAt || timings.startAt,
+              timings.tcpConnectionAt || timings.startAt
+            ),
+            firstByte: getDuration(
+              timings.tlsHandshakeAt || timings.tcpConnectionAt || timings.startAt,
+              timings.firstByteAt
+            ),
+            transfer: getDuration(timings.firstByteAt, timings.endAt),
+            total: getDuration(timings.startAt, timings.endAt),
+          });
+          resolve(responseBody.join(""));
+        });
+      }
+    );
+
+    req.on("socket", (socket) => {
+      socket.on("lookup", () => {
+        timings.dnsLookupAt = process.hrtime.bigint();
+      });
+      socket.on("connect", () => {
+        timings.tcpConnectionAt = process.hrtime.bigint();
+      });
+      socket.on("secureConnect", () => {
+        timings.tlsHandshakeAt = process.hrtime.bigint();
+      });
+    });
+
+    req.on("error", function (e) {
+      reject("problem with request: " + e.message);
+    });
+    // write data to request body
+    req.write(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: method,
+        params: params || [],
+      })
+    );
+    req.end();
   });
 }
 

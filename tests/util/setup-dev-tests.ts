@@ -9,6 +9,7 @@ import {
   providePolkadotApi,
   EnhancedWeb3,
   customWeb3Request,
+  customRawRequest,
 } from "./providers";
 import { ChildProcess } from "child_process";
 import { createAndFinalizeBlock } from "./block";
@@ -26,7 +27,6 @@ export interface DevTestContext {
   createWeb3: (protocol?: "ws" | "http") => Promise<EnhancedWeb3>;
   createEthers: () => Promise<ethers.providers.JsonRpcProvider>;
   createPolkadotApi: () => Promise<ApiPromise>;
-
   createBlock: (options?: BlockCreation) => Promise<{
     txResults: JsonRpcResponse[];
     block: {
@@ -34,6 +34,7 @@ export interface DevTestContext {
       hash: BlockHash;
     };
   }>;
+  customRawRequest: (method: string, params: any[]) => Promise<any>;
 
   // We also provided singleton providers for simplicity
   web3: EnhancedWeb3;
@@ -100,6 +101,8 @@ export function describeDevMoonbeam(title: string, cb: (context: DevTestContext)
 
         return apiPromise;
       };
+      context.customRawRequest = (method: string, params: any[]) =>
+        customRawRequest(`localhost`, init.rpcPort, method, params);
 
       context.polkadotApi = await context.createPolkadotApi();
       context.web3 = await context.createWeb3();

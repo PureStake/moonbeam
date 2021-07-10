@@ -1,6 +1,6 @@
 import tcpPortUsed from "tcp-port-used";
 import { spawn, ChildProcess } from "child_process";
-import { BINARY_PATH, DISPLAY_LOG, MOONBEAM_LOG, SPAWNING_TIME } from "./constants";
+import { BINARY_PATH, DISPLAY_LOG, MOONBEAM_LOG, SPAWNING_TIME, ANALYZER } from "./constants";
 const debug = require("debug")("test:dev-node");
 
 export async function findAvailablePorts() {
@@ -53,8 +53,7 @@ export async function startMoonbeamDevNode(): Promise<{
   nodeStarted = true;
   const { p2pPort, rpcPort, wsPort } = await findAvailablePorts();
 
-  const cmd = BINARY_PATH;
-  const args = [
+  const moonbeamArgs = [
     `--execution=Native`, // Faster execution using native
     `--no-telemetry`,
     `--no-prometheus`,
@@ -67,6 +66,14 @@ export async function startMoonbeamDevNode(): Promise<{
     `--ws-port=${wsPort}`,
     `--tmp`,
   ];
+
+  const [cmd, args] =
+    ANALYZER == "valgrind"
+      ? ["valgrind", ["--tool=callgrind", "-v", BINARY_PATH, ...moonbeamArgs]]
+      : ANALYZER == "perf"
+      ? ["perf", ["record", "-F", "997", "-g", BINARY_PATH, ...moonbeamArgs]]
+      : [BINARY_PATH, moonbeamArgs];
+
   debug(`Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort} --ws-port=${wsPort}`);
 
   const onProcessExit = function () {
