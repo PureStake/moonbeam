@@ -238,7 +238,7 @@ where
 			if let Some(transaction) = transactions.get(index) {
 				return client
 					.runtime_api()
-					.trace_transaction(&parent_block_id, ext, &transaction, trace_type)
+					.trace_transaction(&parent_block_id, &header, ext, &transaction, trace_type)
 					.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?
 					.map_err(|e| internal_err(format!("DispatchError: {:?}", e)));
 			}

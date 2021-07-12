@@ -7,8 +7,8 @@ authors = ["PureStake"]
 edition = '2018'
 
 [dependencies]
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.6" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 structopt = "0.3.8"
 tiny-bip39 = { version = "0.6" }
 libsecp256k1 = { version = "0.3.2" }

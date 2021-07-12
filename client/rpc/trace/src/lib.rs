@@ -839,7 +839,7 @@ where
 
 		// Trace the block.
 		let mut traces: Vec<_> = api
-			.trace_block(&substrate_parent_id, extrinsics)
+			.trace_block(&substrate_parent_id, &block_header, extrinsics)
 			.map_err(|e| {
 				internal_err(format!(
 					"Blockchain error when replaying block {} : {:?}",

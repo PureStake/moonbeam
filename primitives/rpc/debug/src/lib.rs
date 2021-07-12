@@ -27,12 +27,14 @@ use serde::Serialize;
 sp_api::decl_runtime_apis! {
 	pub trait DebugRuntimeApi {
 		fn trace_transaction(
+			header: &Block::Header,
 			extrinsics: Vec<Block::Extrinsic>,
 			transaction: &Transaction,
 			trace_type: single::TraceType,
 		) -> Result<single::TransactionTrace, sp_runtime::DispatchError>;
 
 		fn trace_block(
+			header: &Block::Header,
 			extrinsics: Vec<Block::Extrinsic>,
 		) -> Result<Vec<block::TransactionTrace>, sp_runtime::DispatchError>;
 	}

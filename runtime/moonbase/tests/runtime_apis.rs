@@ -328,7 +328,9 @@ fn debug_runtime_api_trace_transaction() {
 			);
 			let transaction = ethereum_transaction();
 			let eth_uxt = uxt();
+			let header = System::finalize();
 			assert!(Runtime::trace_transaction(
+				&header,
 				vec![non_eth_uxt.clone(), eth_uxt, non_eth_uxt.clone()],
 				&transaction,
 				moonbeam_rpc_primitives_debug::single::TraceType::Raw {
@@ -359,12 +361,11 @@ fn debug_runtime_api_trace_block() {
 				pallet_balances::Call::<Runtime>::transfer(AccountId::from(BOB), 1 * UNIT).into(),
 			);
 			let eth_uxt = uxt();
-			assert!(Runtime::trace_block(vec![
-				non_eth_uxt.clone(),
-				eth_uxt.clone(),
-				non_eth_uxt,
-				eth_uxt
-			],)
+			let header = System::finalize();
+			assert!(Runtime::trace_block(
+				&header,
+				vec![non_eth_uxt.clone(), eth_uxt.clone(), non_eth_uxt, eth_uxt],
+			)
 			.is_ok());
 		});
 }
