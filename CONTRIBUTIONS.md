@@ -44,3 +44,7 @@ The following is a list of directories of interest in development.
 |scripts/               | Utilities for launching and interacting with a Moonbeam chain (typescript) |
 |specs/                 | Spec files used to generate genesis for well-known Moonbeam networks       |
 |tools/                 | Various tools generally related to development (typescript)                |
+
+# Git branch conventions
+
+See [Git branch conventions](docs/git-branches-conventions.md)
