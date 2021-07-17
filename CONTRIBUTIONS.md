@@ -44,3 +44,13 @@ The following is a list of directories of interest in development.
 |scripts/               | Utilities for launching and interacting with a Moonbeam chain (typescript) |
 |specs/                 | Spec files used to generate genesis for well-known Moonbeam networks       |
 |tools/                 | Various tools generally related to development (typescript)                |
+
+### PR labels conventions
+
+Any PR must indicate whether the changes should be part of the runtime changelog or the binary changelog or neither.
+
+If the changes are to be listed in the runtime changelog, associate the label `B7-runtimenoteworthy` with your PR.
+
+If the changes should be listed in the binary changelog, associate the label `B5-clientnoteworthy` with your PR.
+
+If the changes are not to be listed in any changelog, associate the label `B0-silent` with your PR.
