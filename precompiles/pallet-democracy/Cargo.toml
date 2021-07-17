@@ -1,0 +1,44 @@
+[package]
+name = "pallet-democracy-precompiles"
+version = "0.1.0"
+authors = ["PureStake"]
+edition = "2018"
+description = "A Precompile to make Substrate's pallet-democracy accessible to pallet-evm"
+
+[dependencies]
+log = "0.4"
+rustc-hex = { version="2.0.1", default-features=false }
+
+codec = { package="parity-scale-codec", version="2.0.0", default-features=false }
+frame-support = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4", default-features=false }
+evm = { version="0.27.0", default-features=false, features=["with-codec"] }
+sp-std = { git="https://github.com/paritytech/substrate", default-features=false, branch="polkadot-v0.9.4" }
+sp-core = { git="https://github.com/paritytech/substrate", default-features=false, branch="polkadot-v0.9.4" }
+sp-io = { git="https://github.com/paritytech/substrate", default-features=false, branch="polkadot-v0.9.4" }
+pallet-evm = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-v0.8.2" }
+pallet-democracy = { git="https://github.com/paritytech/substrate", default-features=false, branch="polkadot-v0.9.4" }
+frame-system = { git="https://github.com/paritytech/substrate", default-features=false, branch="polkadot-v0.9.4" }
+
+[dev-dependencies]
+hex = "0.4"
+hex-literal = "0.3.1"
+sp-runtime = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4" }
+pallet-balances = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4" }
+pallet-timestamp = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4" }
+pallet-scheduler = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4" }
+max-encoded-len = { git="https://github.com/paritytech/substrate", branch="polkadot-v0.9.4", features=["derive"] }
+serde = "1.0.100"
+derive_more = "0.99"
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "frame-support/std",
+    "evm/std",
+    "sp-std/std",
+    "sp-core/std",
+    "pallet-democracy/std",
+    "frame-system/std",
+    "pallet-evm/std",
+]
