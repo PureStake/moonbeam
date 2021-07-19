@@ -144,7 +144,7 @@ describeDevMoonbeam("Staking - Join Nominators", (context) => {
       .signAndSend(ethan);
     await context.createBlock();
 
-    const nominatorsAfter = await context.polkadotApi.query.parachainStaking.nominatorState(ETHAN);
+    const nominatorsAfter = await context.polkadotApi.query.parachainStaking.nominatorState2(ETHAN);
     expect(
       (
         nominatorsAfter.toHuman() as {
@@ -167,16 +167,15 @@ describeDevMoonbeam("Staking - Revoke Nomination", (context) => {
     await context.createBlock();
   });
   it("should succesfully revoke nomination for ALITH", async function () {
-    await context.polkadotApi.tx.parachainStaking
-      .revokeNomination(ALITH) //TODO: when converting to test add .leaveNominators()
-      // that should produce the same behavior
-      .signAndSend(ethan);
+    await context.polkadotApi.tx.parachainStaking.revokeNomination(ALITH).signAndSend(ethan);
     await context.createBlock();
     const nominatorsAfterRevocation =
-      await context.polkadotApi.query.parachainStaking.nominatorState(ETHAN);
-    expect(nominatorsAfterRevocation.toHuman() === null).to.equal(
-      true,
-      "there should be no nominator"
+      await context.polkadotApi.query.parachainStaking.nominatorState2(ETHAN);
+    expect(
+      (nominatorsAfterRevocation.revocations[0] === ALITH).to.equal(
+        true,
+        "revocation didnt go through"
+      )
     );
   });
 });

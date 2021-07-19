@@ -344,7 +344,7 @@ benchmarks! {
 		}
 	}: _(RawOrigin::Signed(caller.clone()), nomination_count)
 	verify {
-		assert!(!Pallet::<T>::is_nominator(&caller));
+		assert!(Pallet::<T>::nominator_state2(&caller).unwrap().is_leaving());
 	}
 
 	revoke_nomination {
@@ -363,9 +363,12 @@ benchmarks! {
 			0u32,
 			0u32
 		)?;
-	}: _(RawOrigin::Signed(caller.clone()), collator)
+	}: _(RawOrigin::Signed(caller.clone()), collator.clone())
 	verify {
-		assert!(!Pallet::<T>::is_nominator(&caller));
+		assert_eq!(
+			Pallet::<T>::nominator_state2(&caller).unwrap().revocations.0[0],
+			collator
+		);
 	}
 
 	nominator_bond_more {
@@ -520,7 +523,7 @@ benchmarks! {
 		// PREPARE RUN_TO_BLOCK LOOP
 		let before_running_round_index = Pallet::<T>::round().current;
 		let round_length: T::BlockNumber = Pallet::<T>::round().length.into();
-		let reward_delay = <<T as Config>::BondDuration as Get<u32>>::get() + 2u32;
+		let reward_delay = <<T as Config>::RewardPaymentDelay as Get<u32>>::get() + 2u32;
 		let mut now = <frame_system::Pallet<T>>::block_number();
 		let mut counter = 0usize;
 		let end = Pallet::<T>::round().first + (round_length * reward_delay.into());
@@ -581,7 +584,7 @@ benchmarks! {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use crate::benchmarks::*;
 	use crate::mock::Test;
 	use frame_support::assert_ok;
 	use sp_io::TestExternalities;
