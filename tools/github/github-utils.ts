@@ -33,7 +33,7 @@ export async function getCommitAndLabels(
   repo: string,
   previousTag: string,
   newTag: string
-) {
+): Promise<{ prByLabels: any, commits: any[] }> {
   let commits: Commits = [];
   let more = true;
   let page = 0;
