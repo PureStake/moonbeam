@@ -11,7 +11,7 @@
     "ethjs-provider-http": "^0.1.6",
     "octokit": "^1.0.6",
     "pkg": "^4.4.9",
-    "polkadot-launch": "^1.6.1",
+    "polkadot-launch": "^1.7.0",
     "rlp": "^2.2.6",
     "solc": "^0.8.0",
     "truffle-privatekey-provider": "^1.5.0",

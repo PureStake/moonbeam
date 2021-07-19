@@ -25,6 +25,7 @@ jobs:
       image_exists: ${{ steps.check-check-docker-image.outputs.image_exists }}
       sha: ${{ steps.get-sha.outputs.sha }}
       sha8: ${{ steps.get-sha.outputs.sha8 }}
+      polkadot_commit: ${{ steps.get-sha.outputs.polkadot_commit }}
     steps:
       - name: Check git ref
         id: check-git-ref
@@ -42,6 +43,8 @@ jobs:
         run: |
           echo ::set-output name=sha::$(git log -1 --format="%H")
           echo ::set-output name=sha8::$(git log -1 --format="%H" | cut -c1-8)
+          echo ::set-output name=polkadot_commit::$(egrep -o '/polkadot.*#([^\"]*)' Cargo.lock | \
+            head -1 | sed 's/.*#//' |  cut -c1-8)
       - name: Check existing docker image
         id: check-docker-image
         run: |
@@ -134,6 +137,28 @@ jobs:
         run: rustup show
       - name: Format code with rustfmt
         run: cargo fmt -- --check
+
+  ####### Preparing polkadot binary for parachain tests #######
+
+  prepare-polkadot:
+    runs-on: self-hosted
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Check & build polkadot docker image
+        run: |
+          POLKADOT_COMMIT=${{ needs.set-tags.outputs.polkadot_commit }}
+          DOCKER_TAG="purestake/moonbase-relay-testnet:sha-$POLKADOT_COMMIT"
+          POLKADOT_EXISTS=docker manifest inspect $DOCKER_TAG > /dev/null && \
+            echo "true" || echo "false"
+          if [[ "$POLKADOT_EXISTS" == "false" ]]; then
+            # $POLKADOT_COMMIT is used to build the relay image
+            ./scripts/build-alphanet-relay-image.sh
+            docker push $DOCKER_TAG
+          fi
 
   ####### Building and Testing binaries #######
 
@@ -256,12 +281,48 @@ jobs:
           npm install
           node_modules/.bin/mocha --parallel -j 7 -r ts-node/register 'tests/**/test-*.ts'
 
+  typescript-para-tests:
+    runs-on: self-hosted
+    needs: ["set-tags", "build", "prepare-polkadot"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: moonbeam
+          path: build
+      - name: Retrieve polkadot
+        run: |
+          POLKADOT_COMMIT=${{ needs.set-tags.outputs.polkadot_commit }}
+          DOCKER_TAG="purestake/moonbase-relay-testnet:sha-$POLKADOT_COMMIT"
+          docker create -ti --name dummy $DOCKER_TAG bash
+          docker cp dummy:/usr/local/bin/polkadot build/polkadot
+          docker rm -f dummy
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Typescript integration tests (against dev service)
+        env:
+          BINARY_PATH: ../build/moonbeam
+          RELAY_BINARY_PATH: ../build/polkadot
+        run: |
+          chmod uog+x build/polkadot
+          chmod uog+x build/moonbeam
+          cd moonbeam-types-bundle
+          npm install
+          cd ../tests
+          npm install
+          node_modules/.bin/mocha --parallel -j 7 -r ts-node/register 'para-tests/**/test-*.ts'
+
   ####### Prepare and Deploy Docker images #######
 
   generate-parachain-specs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
-    needs: ["build", "typescript-tests"]
+    needs: ["build", "typescript-tests", "typescript-para-tests"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
