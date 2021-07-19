@@ -1,8 +1,31 @@
 import { Octokit } from "octokit";
+import { execSync } from "child_process";
 
 // Typescript 4 will support it natively, but not yet :(
 type Await<T> = T extends PromiseLike<infer U> ? U : T;
 type Commits = Await<ReturnType<Octokit["rest"]["repos"]["compareCommits"]>>["data"]["commits"];
+
+export function getCompareLink(packageName: string, previousTag: string, newTag: string) {
+  const previousPackage = execSync(
+    `git show ${previousTag}:../Cargo.lock | grep ${packageName}? | head -1 | grep -o '".*"'`
+  ).toString();
+  const previousCommit = /#([0-9a-f]*)/g.exec(previousPackage)[1].slice(0, 8);
+  const previousRepo = /(https:\/\/.*)\?/g.exec(previousPackage)[1];
+
+  const newPackage = execSync(
+    `git show ${newTag}:../Cargo.lock | grep ${packageName}? | head -1 | grep -o '".*"'`
+  ).toString();
+  const newCommit = /#([0-9a-f]*)/g.exec(newPackage)[1].slice(0, 8);
+  const newRepo = /(https:\/\/.*)\?/g.exec(newPackage)[1];
+  const newRepoOrganization = /github.com\/([^\/]*)/g.exec(newRepo)[1];
+
+  const diffLink =
+    previousRepo !== newRepo
+      ? `${previousRepo}/compare/${previosCommit}...${newRepoOrganization}:${newCommit}`
+      : `${previousRepo}/compare/${previosCommit}...${newCommit}`;
+
+  return diffLink;
+}
 
 export async function getCommitAndLabels(
   octokit: Octokit,

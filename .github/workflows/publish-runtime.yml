@@ -1,44 +1,17 @@
-name: Publish Release Draft
+name: Publish Runtime Draft
 
-# The code (like generate-release-body) will be taken from the tag version, not master
+# The code (like generate-release-body) will be taken from the tag versions, not master
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: tag (ex. v0.8.3) to generate release note and srtool runtimes from
+      from:
+        description: tag (ex. runtime-53) to retrieve commit diff from
+        required: true
+      to:
+        description: tag (ex. runtime-155) to generate release note and srtool runtimes from
         required: true
 
 jobs:
-  ####### Building binaries #######
-
-  build-binary:
-    runs-on: self-hosted
-    env:
-      RUSTFLAGS: "-C opt-level=3"
-    outputs:
-      RUSTC: ${{ steps.get-rust-versions.outputs.rustc }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.tag }}
-      - name: Setup Rust toolchain
-        run: rustup show
-      - id: get-rust-versions
-        run: |
-          echo "::set-output name=rustc::$(rustc --version)"
-      - name: Build Node
-        run: cargo build --release --all
-      - name: Save parachain binary
-        run: |
-          mkdir -p build
-          cp target/release/moonbeam build/moonbeam;
-      - name: Upload binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: moonbeam
-          path: build
-
   ####### Build runtimes with srtool #######
 
   build-srtool-runtimes:
@@ -51,7 +24,7 @@ jobs:
         run: echo "TMSP=$(date '+%Y%m%d_%H%M%S')" >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.tag }}
+          ref: ${{ github.event.inputs.to }}
       - name: Srtool build
         id: srtool_build
         uses: chevdor/srtool-actions@v0.1.0
@@ -75,7 +48,7 @@ jobs:
 
   publish-draft-release:
     runs-on: ubuntu-latest
-    needs: ["build-binary", "build-srtool-runtimes"]
+    needs: ["build-srtool-runtimes"]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
       asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
@@ -83,12 +56,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.tag }}
+          ref: ${{ github.event.inputs.to }}
           fetch-depth: 0
-      - uses: actions/download-artifact@v2
-        with:
-          name: moonbeam
-          path: build
       - name: Download moonbase runtime
         uses: actions/download-artifact@v2
         with:
@@ -118,27 +87,26 @@ jobs:
         run: |
           cd tools
           yarn
-          yarn -s run ts-node github/generate-release-body.ts --tag "${{ github.event.inputs.tag }}" --srtool-report-folder '../build/' > ../body.md
+          yarn -s run ts-node github/generate-runtimes-body.ts --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" --srtool-report-folder '../build/' > ../body.md
       - name: Get runtime version
         id: get-runtime-ver
         run: |
           runtime_moonbase_ver="$(cat ./runtime/moonbase/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
-
           echo "::set-output name=runtime_moonbase_ver::$runtime_moonbase_ver"
           mv build/moonbase-runtime.compact.wasm moonbase-runtime-${runtime_moonbase_ver}.wasm
           mv build/moonbase-srtool-digest.json moonbase-runtime-${runtime_moonbase_ver}-srtool-digest.json
-          runtime_moonshadow_ver="$(cat ./runtime/moonshadow/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
 
+          runtime_moonshadow_ver="$(cat ./runtime/moonshadow/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
           echo "::set-output name=runtime_moonshadow_ver::$runtime_moonshadow_ver"
           mv build/moonshadow-runtime.compact.wasm moonshadow-runtime-${runtime_moonshadow_ver}.wasm
           mv build/moonshadow-srtool-digest.json moonshadow-runtime-${runtime_moonshadow_ver}-srtool-digest.json
-          runtime_moonriver_ver="$(cat ./runtime/moonriver/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
 
+          runtime_moonriver_ver="$(cat ./runtime/moonriver/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
           echo "::set-output name=runtime_moonriver_ver::$runtime_moonriver_ver"
           mv build/moonriver-runtime.compact.wasm moonriver-runtime-${runtime_moonriver_ver}.wasm
           mv build/moonriver-srtool-digest.json moonriver-runtime-${runtime_moonriver_ver}-srtool-digest.json
-          runtime_moonbeam_ver="$(cat ./runtime/moonbeam/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
 
+          runtime_moonbeam_ver="$(cat ./runtime/moonbeam/src/lib.rs | grep -o 'spec_version: [0-9]*' | tail -1 | grep -o '[0-9]*')"
           echo "::set-output name=runtime_moonbeam_ver::$runtime_moonbeam_ver"
           mv build/moonbeam-runtime.compact.wasm moonbeam-runtime-${runtime_moonbeam_ver}.wasm
           mv build/moonbeam-srtool-digest.json moonbeam-runtime-${runtime_moonbeam_ver}-srtool-digest.json
@@ -149,8 +117,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.inputs.tag }}
-          release_name: Moonbase ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.to }}
+          release_name: Runtime ${{ github.event.inputs.to }}
           body_path: body.md
           draft: true
       - name: Upload moonbase wasm
@@ -225,12 +193,3 @@ jobs:
           asset_path: moonbeam-runtime-${{ steps.get-runtime-ver.outputs.runtime_moonbeam_ver }}-srtool-digest.json
           asset_name: moonbeam-runtime-${{ steps.get-runtime-ver.outputs.runtime_moonbeam_ver }}.srtool-digest.json
           asset_content_type: application/json
-      - name: Upload moonbeam
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: build/moonbeam
-          asset_name: moonbeam
-          asset_content_type: application/octet-stream

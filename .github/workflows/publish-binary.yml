@@ -1,0 +1,91 @@
+name: Publish Binary Draft
+
+# The code (like generate-release-body) will be taken from the tag version, not master
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: tag (ex. v0.8.3) to retrieve commit diff from
+        required: true
+      to:
+        description: tag (ex. v0.9.0) to generate release note and srtool runtimes from
+        required: true
+
+jobs:
+  ####### Building binaries #######
+
+  build-binary:
+    runs-on: self-hosted
+    env:
+      RUSTFLAGS: "-C opt-level=3"
+    outputs:
+      RUSTC: ${{ steps.get-rust-versions.outputs.rustc }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.to }}
+      - name: Setup Rust toolchain
+        run: rustup show
+      - id: get-rust-versions
+        run: |
+          echo "::set-output name=rustc::$(rustc --version)"
+      - name: Build Node
+        run: cargo build --release --all
+      - name: Save parachain binary
+        run: |
+          mkdir -p build
+          cp target/release/moonbeam build/moonbeam;
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: moonbeam
+          path: build
+
+  ####### Prepare the release draft #######
+
+  publish-draft-release:
+    runs-on: ubuntu-latest
+    needs: ["build-binary"]
+    outputs:
+      release_url: ${{ steps.create-release.outputs.html_url }}
+      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.to }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v2
+        with:
+          name: moonbeam
+          path: build
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Generate runtimes body
+        id: generate-runtimes-body
+        run: |
+          cd tools
+          yarn
+          yarn -s run ts-node github/generate-release-body.ts --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" --srtool-report-folder '../build/' > ../body.md
+      - name: Create draft release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.to }}
+          release_name: Moonbeam ${{ github.event.inputs.to }}
+          body_path: body.md
+          draft: true
+      - name: Upload moonbeam
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: build/moonbeam
+          asset_name: moonbeam
+          asset_content_type: application/octet-stream
