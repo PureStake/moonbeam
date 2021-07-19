@@ -1,8 +1,11 @@
 import { execSync } from "child_process";
+import { Octokit } from "octokit";
 import { readFileSync } from "fs";
 import yargs from "yargs";
 import path from "path";
-import { getCompareLink } from "./github-utils";
+import { getCommitAndLabels, getCompareLink } from "./github-utils";
+
+const RUNTIME_CHANGES_LABEL = "B7-runtimenoteworthy";
 
 function capitalize(s) {
   return s[0].toUpperCase() + s.slice(1);
@@ -21,7 +24,7 @@ function getRuntimeInfo(srtoolReportFolder: string, runtimeName: string) {
   };
 }
 
-const main = () => {
+async function main() {
   const argv = yargs(process.argv.slice(2))
     .usage("Usage: npm run ts-node github/generate-release-body.ts [args]")
     .version("1.0.0")
@@ -45,6 +48,10 @@ const main = () => {
     .demandOption(["srtool-report-folder", "from", "to"])
     .help().argv;
 
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN || undefined,
+  });
+
   const previousTag = argv.from;
   const newTag = argv.to;
 
@@ -56,10 +63,14 @@ const main = () => {
     name: repoName,
     link: getCompareLink(repoName, previousTag, newTag),
   }));
-  const commits = execSync(`git log --oneline --pretty=format:"%s" ${previousTag}...${newTag}`)
-    .toString()
-    .split(`\n`)
-    .filter((l) => !!l);
+
+  const { prByLabels } = await getCommitAndLabels(
+    octokit,
+    "PureStake",
+    "moonbeam",
+    previousTag,
+    newTag
+  );
 
   const template = `${
     runtimes.length > 0
@@ -85,7 +96,7 @@ WASM runtime built using \`${runtimes[0]?.srtool.info.rustc}\`
 
 ## Changes
 
-${commits.map((commit) => `* ${commit}`).join("\n")}
+${prByLabels[RUNTIME_CHANGES_LABEL].map((pr) => `* ${pr.title} (#${pr.number})`).join("\n")}
 
 ## Dependency changes
 
@@ -93,6 +104,6 @@ Moonbeam: https://github.com/PureStake/moonbeam/compare/${previousTag}...${newTa
 ${moduleLinks.map((modules) => `${capitalize(modules.name)}: ${modules.link}`).join("\n")}
 `;
   console.log(template);
-};
+}
 
 main();
