@@ -43,25 +43,30 @@ const parachains: { [name: string]: ParachainConfig } = {
     chain: "moonriver-local",
     docker: "purestake/moonbeam:sha-153c4c4a",
   },
-  "alphanet-8.2": {
+  "moonbase-0.8.2": {
     relay: "rococo-9004",
     chain: "moonbase-local",
     docker: "purestake/moonbeam:v0.8.2",
   },
-  "alphanet-8.1": {
+  "moonbase-0.8.1": {
     relay: "rococo-9004",
     chain: "moonbase-local",
     docker: "purestake/moonbeam:v0.8.1",
   },
-  "alphanet-8.0": {
+  "moonbase-0.8.0": {
     relay: "rococo-9001",
     chain: "moonbase-local",
     docker: "purestake/moonbeam:v0.8.0",
   },
-  "alphanet-9.2": {
+  "moonbase-0.9.2": {
     relay: "rococo-9004",
     chain: "moonbase-local",
     docker: "purestake/moonbeam:v0.9.2",
+  },
+  "moonbase-0.9.4": {
+    relay: "rococo-9004",
+    chain: "moonbase-local",
+    docker: "purestake/moonbeam:v0.9.4",
   },
   local: {
     relay: "rococo-9004",
@@ -128,16 +133,6 @@ function start() {
       },
       "parachain-chain": {
         type: "string",
-        choices: [
-          "moonbase",
-          "moonshadow",
-          "moonriver",
-          "moonbeam",
-          "moonbase-local",
-          "moonshadow-local",
-          "moonriver-local",
-          "moonbeam-local",
-        ],
         describe: "overrides parachain chain/runtime",
       },
       "parachain-id": { type: "number", default: 1000, describe: "overrides parachain-id" },
