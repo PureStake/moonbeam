@@ -1351,6 +1351,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "crowdloan-rewards-precompiles"
+version = "0.6.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "derive_more",
+ "evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "hex-literal",
+ "log",
+ "max-encoded-len",
+ "pallet-balances",
+ "pallet-crowdloan-rewards",
+ "pallet-evm",
+ "pallet-scheduler",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rustc-hex",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4789,6 +4819,7 @@ name = "moonbase-runtime"
 version = "0.8.4"
 dependencies = [
  "account",
+ "crowdloan-rewards-precompiles",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
@@ -5113,6 +5144,7 @@ name = "moonbeam-runtime"
 version = "0.8.4"
 dependencies = [
  "account",
+ "crowdloan-rewards-precompiles",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
@@ -5304,6 +5336,7 @@ name = "moonriver-runtime"
 version = "0.8.4"
 dependencies = [
  "account",
+ "crowdloan-rewards-precompiles",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
@@ -5377,6 +5410,7 @@ name = "moonshadow-runtime"
 version = "0.8.4"
 dependencies = [
  "account",
+ "crowdloan-rewards-precompiles",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",

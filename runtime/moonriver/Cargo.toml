@@ -70,6 +70,7 @@ pallet-proxy = { git = "https://github.com/paritytech/substrate", default-featur
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 
 pallet-crowdloan-rewards = { git = "https://github.com/purestake/crowdloan-rewards", default-features = false, branch = "main" }
+crowdloan-rewards-precompiles = { path = "../../precompiles/crowdloan-rewards", default-features = false }
 
 moonbeam-evm-tracer = { path = "../evm_tracer", default-features = false }
 moonbeam-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-features = false }

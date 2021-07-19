@@ -7,7 +7,7 @@ members = [
     'node',
     'node/cli',
     'node/service',
-    'bin/utils/moonkey'
+    'bin/utils/moonkey',
 ]
 exclude = [
     'bin/utils/moonkey'
