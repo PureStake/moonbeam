@@ -49,6 +49,7 @@
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
 mod inflation;
+pub mod migrations;
 #[cfg(test)]
 mod mock;
 mod set;
@@ -65,7 +66,8 @@ pub use pallet::*;
 
 #[pallet]
 pub mod pallet {
-	use crate::{set::OrderedSet, InflationInfo, Range, WeightInfo};
+	pub use crate::set::OrderedSet;
+	use crate::{InflationInfo, Range, WeightInfo};
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{Currency, Get, Imbalance, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
@@ -847,41 +849,23 @@ pub mod pallet {
 			Perbill,
 			Perbill,
 		),
+		/*
+		 * this is mostly (TODO: entirely?) redundant with events emitted from pallet-migrations
 		/// Migrated NominatorState -> NominatorState2, ExitQueue -> ExitQueue2
 		DelayNominationExitsMigrationExecuted,
-	}
-
-	/// Storage migration for delaying nomination exits and revocations
-	fn delay_nomination_exits_migration_execution<T: Config>() {
-		if !<DelayNominationExitsMigration<T>>::get() {
-			// migrate from Nominator -> Nominator2
-			for (acc, nominator_state) in NominatorState::<T>::drain() {
-				let state: Nominator2<T::AccountId, BalanceOf<T>> = nominator_state.into();
-				<NominatorState2<T>>::insert(acc, state);
-			}
-			// migrate from ExitQueue -> ExitQueue2
-			let just_collators_exit_queue = <ExitQueue<T>>::take();
-			let mut candidates: Vec<T::AccountId> = Vec::new();
-			for (acc, _) in just_collators_exit_queue.clone().into_iter() {
-				candidates.push(acc);
-			}
-			<ExitQueue2<T>>::put(ExitQ {
-				candidates: candidates.into(),
-				nominators_leaving: OrderedSet::new(),
-				candidate_schedule: just_collators_exit_queue,
-				nominator_schedule: Vec::new(),
-			});
-			<DelayNominationExitsMigration<T>>::put(true);
-			Pallet::<T>::deposit_event(Event::DelayNominationExitsMigrationExecuted);
-		}
+		*/
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/*
+		 * on_runtime_upgrade() is not implemented for a given pallet when using pallet-migrations
+		 *
 		fn on_runtime_upgrade() -> Weight {
 			delay_nomination_exits_migration_execution::<T>();
 			300_000_000_000 // Three fifths of the max block weight
 		}
+		*/
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let mut round = <Round<T>>::get();
 			if round.should_update(n) {
@@ -913,10 +897,19 @@ pub mod pallet {
 		}
 	}
 
+	/*
+	 * This is also redundant with pallet-migrations, which keeps track of each configured migration
+	 * and ensures that it is run exactly once.
+	 *
+	 * However, there is still an outstanding design issue for when a migration takes longer than
+	 * one block -- should pallet-migrations try to provide storage for this purpose, or should each
+	 * migration be responsible for this?
+	 *
 	#[pallet::storage]
 	#[pallet::getter(fn add_nominator_status_migration)]
 	/// True if executed, false by default
 	type DelayNominationExitsMigration<T: Config> = StorageValue<_, bool, ValueQuery>;
+	*/
 
 	#[pallet::storage]
 	#[pallet::getter(fn collator_commission)]
@@ -943,7 +936,7 @@ pub mod pallet {
 	#[pallet::getter(fn nominator_state)]
 	/// DEPRECATED AFTER `DelayNominationExitsMigration` migration is executed
 	/// Get nominator state associated with an account if account is nominating else None
-	type NominatorState<T: Config> = StorageMap<
+	pub(crate) type NominatorState<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -954,7 +947,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn nominator_state2)]
 	/// Get nominator state associated with an account if account is nominating else None
-	type NominatorState2<T: Config> = StorageMap<
+	pub(crate) type NominatorState2<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -993,12 +986,12 @@ pub mod pallet {
 	#[pallet::getter(fn exit_queue)]
 	/// DEPRECATED
 	/// A queue of collators awaiting exit
-	type ExitQueue<T: Config> = StorageValue<_, Vec<(T::AccountId, RoundIndex)>, ValueQuery>;
+	pub(crate) type ExitQueue<T: Config> = StorageValue<_, Vec<(T::AccountId, RoundIndex)>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn exit_queue2)]
 	/// A queue of collators and nominators awaiting exit
-	type ExitQueue2<T: Config> = StorageValue<_, ExitQ<T::AccountId>, ValueQuery>;
+	pub(crate) type ExitQueue2<T: Config> = StorageValue<_, ExitQ<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn at_stake)]

@@ -7,5 +7,18 @@ version = '0.8.0-dev'
 authors = ["PureStake"]
 edition = '2018'
 
+[dependencies]
+pallet-migrations = { path = "../../pallets/migrations", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+
 [features]
-std = []
+std = [
+	"pallet-migrations/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"frame-support/std",
+	"parachain-staking/std",
+]

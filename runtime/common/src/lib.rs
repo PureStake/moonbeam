@@ -17,3 +17,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod apis;
+pub mod migrations;

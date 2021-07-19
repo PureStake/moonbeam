@@ -4846,6 +4846,7 @@ dependencies = [
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-migrations",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
@@ -6343,6 +6344,21 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-migrations"
+version = "0.1.0"
+dependencies = [
+ "environmental",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -9052,6 +9068,13 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.8.0-dev"
+dependencies = [
+ "frame-support",
+ "pallet-migrations",
+ "parachain-staking",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "rustc-demangle"
